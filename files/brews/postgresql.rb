@@ -22,9 +22,12 @@ class Postgresql < Formula
     cause 'Miscompilation resulting in segfault on queries'
   end
 
-  # Fix uuid-ossp build issues: http://archives.postgresql.org/pgsql-general/2012-07/msg00654.php
   def patches
-    DATA
+    [
+     # Fix uuid-ossp build issues
+     DATA,  # http://archives.postgresql.org/pgsql-general/2012-07/msg00654.php
+     'http://www.postgresql.org/message-id/attachment/32317/configure-uuid.patch',
+    ]
   end
 
   def install
