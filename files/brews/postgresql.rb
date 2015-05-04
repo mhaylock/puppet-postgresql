@@ -12,7 +12,7 @@ class Postgresql < Formula
   option 'enable-dtrace', 'Build with DTrace support'
 
   depends_on 'readline'
-  depends_on 'ossp-uuid' => :recommended
+  depends_on 'e2fsprogs' => :recommended
 
   conflicts_with 'postgres-xc',
     :because => 'postgresql and postgres-xc install the same binaries.'
@@ -20,14 +20,6 @@ class Postgresql < Formula
   fails_with :clang do
     build 211
     cause 'Miscompilation resulting in segfault on queries'
-  end
-
-  def patches
-    [
-     # Fix uuid-ossp build issues
-     DATA,  # http://archives.postgresql.org/pgsql-general/2012-07/msg00654.php
-     'http://www.postgresql.org/message-id/attachment/32317/configure-uuid.patch',
-    ]
   end
 
   def install
@@ -49,16 +41,10 @@ class Postgresql < Formula
       --with-libxslt
     ]
 
-    args << "--with-ossp-uuid" if build.with? 'ossp-uuid'
+    args << "--with-uuid=e2fs" if build.with? 'e2fsprogs'
     args << "--with-perl" unless build.include? 'no-perl'
     args << "--with-tcl" unless build.include? 'no-tcl'
     args << "--enable-dtrace" if build.include? 'enable-dtrace'
-
-    if build.with? 'ossp-uuid'
-      ENV.append 'CFLAGS', `uuid-config --cflags`.strip
-      ENV.append 'LDFLAGS', `uuid-config --ldflags`.strip
-      ENV.append 'LIBS', `uuid-config --libs`.strip
-    end
 
     if build.build_32_bit?
       ENV.append 'CFLAGS', "-arch #{MacOS.preferred_arch}"
@@ -69,16 +55,3 @@ class Postgresql < Formula
     system "make install-world"
   end
 end
-
-__END__
---- a/contrib/uuid-ossp/uuid-ossp.c        2012-07-30 18:34:53.000000000 -0700
-+++ b/contrib/uuid-ossp/uuid-ossp.c        2012-07-30 18:35:03.000000000 -0700
-@@ -9,6 +9,8 @@
-  *-------------------------------------------------------------------------
-  */
-
-+#define _XOPEN_SOURCE
-+
- #include "postgres.h"
- #include "fmgr.h"
- #include "utils/builtins.h"
